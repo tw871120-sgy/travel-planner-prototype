@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Travel Concierge Prototype</title>
+    <link rel="stylesheet" href="./styles.css?v=10" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="app-hero" aria-label="AI travel concierge">
+        <div class="hero-copy">
+          <p class="eyebrow">AI Travel Concierge · Build v28</p>
+          <h1>旅遊小偷</h1>
+          <p class="hero-tagline">偷走繁瑣規劃，留下剛剛好的旅程。</p>
+          <div class="hero-actions" aria-label="主要操作">
+            <button type="button" id="hero-start" class="hero-cta primary">開始規劃</button>
+            <button type="button" id="hero-inspiration" class="hero-cta secondary">探索靈感</button>
+          </div>
+        </div>
+        <aside class="concierge-card" aria-label="AI concierge summary">
+          <p>Today’s Journey</p>
+          <h2>Kyoto · 5 Days</h2>
+          <span>Culture / Cafe / Hidden Spots</span>
+          <strong>AI Match 92%</strong>
+        </aside>
+        <div class="hero-visual" aria-hidden="true">
+          <div class="featured-route">
+            <span>FEATURED ROUTE</span>
+            <strong>Desert Road · Hidden Escape</strong>
+          </div>
+        </div>
+      </section>
+
+      <nav class="journey-nav" aria-label="規劃步驟">
+        <p class="tabs-kicker">Plan Your Journey</p>
+        <div class="sheet-tabs">
+          <button type="button" class="tab-button active" data-tab="settings">01 基本設定</button>
+          <button type="button" class="tab-button" data-tab="spots">02 景點池</button>
+          <button type="button" class="tab-button" data-tab="itinerary">03 建議行程</button>
+          <button type="button" class="tab-button" data-tab="reservations">04 預約</button>
+          <button type="button" class="tab-button" data-tab="weather">05 天氣</button>
+        </div>
+      </nav>
+
+      <section class="sheet active" data-sheet="settings">
+        <div class="panel input-panel">
+          <div class="panel-heading">
+            <h2>基本設定</h2>
+            <p class="subcopy">設定旅遊天數、節奏與作息。機票可以先不填。</p>
+          </div>
+
+          <form id="planner-form" class="form-grid">
+            <fieldset class="chips city-picker">
+              <legend>目的地</legend>
+              <label><input type="checkbox" name="city" value="osaka" checked /> 大阪</label>
+              <label><input type="checkbox" name="city" value="kyoto" checked /> 京都</label>
+              <label><input type="checkbox" name="city" value="tokyo" /> 東京</label>
+              <label><input type="checkbox" name="city" value="seoul" /> 首爾</label>
+            </fieldset>
+
+            <fieldset class="setting-group trip-settings">
+              <legend>旅行條件</legend>
+            <label>
+              <span>天數</span>
+              <input id="days" type="number" min="1" max="5" value="5" />
+            </label>
+
+            <label>
+              <span>旅行節奏</span>
+              <select id="pace">
+                <option value="balanced">剛剛好</option>
+                <option value="relaxed">輕鬆一點</option>
+                <option value="packed">多塞一點</option>
+              </select>
+            </label>
+
+            <label>
+              <span>旅遊類型</span>
+              <select id="travel-profile">
+                <option value="friends" selected>朋友出遊</option>
+                <option value="family">家庭 / 長輩</option>
+                <option value="solo">獨旅</option>
+                <option value="company">員工旅遊</option>
+              </select>
+            </label>
+
+            <label>
+              <span>每日外出上限</span>
+              <select id="outing-limit">
+                <option value="auto" selected>依類型自動</option>
+                <option value="480">8 小時</option>
+                <option value="600">10 小時</option>
+                <option value="720">12 小時</option>
+                <option value="840">14 小時</option>
+              </select>
+            </label>
+            </fieldset>
+
+            <fieldset class="setting-group routine-settings">
+              <legend>每日節奏</legend>
+            <label>
+              <span>每天出門</span>
+              <input id="start-time" type="time" value="09:30" />
+            </label>
+
+            <label>
+              <span>梳妝打扮</span>
+              <select id="prep-time">
+                <option value="30">30 分鐘</option>
+                <option value="45" selected>45 分鐘</option>
+                <option value="60">60 分鐘</option>
+                <option value="90">90 分鐘</option>
+              </select>
+            </label>
+
+            <label>
+              <span>回住宿時間</span>
+              <input id="return-time" type="time" value="21:00" />
+            </label>
+            </fieldset>
+
+            <fieldset class="routine-combo meal-combo">
+              <legend>用餐時間</legend>
+              <label>
+                <span>早餐</span>
+                <select id="breakfast-time">
+                  <option value="0">不吃早餐</option>
+                  <option value="30" selected>30 分鐘</option>
+                  <option value="45">45 分鐘</option>
+                  <option value="60">60 分鐘</option>
+                </select>
+              </label>
+              <label>
+                <span>午餐</span>
+                <select id="lunch-time">
+                  <option value="0">不特別預留</option>
+                  <option value="45">45 分鐘</option>
+                  <option value="60" selected>60 分鐘</option>
+                  <option value="90">90 分鐘</option>
+                </select>
+              </label>
+              <label>
+                <span>晚餐</span>
+                <select id="dinner-time">
+                  <option value="0">不特別預留</option>
+                  <option value="60" selected>60 分鐘</option>
+                  <option value="90">90 分鐘</option>
+                </select>
+              </label>
+            </fieldset>
+
+            <details class="flight-box" open>
+              <summary>加入航班時間</summary>
+              <div class="flight-grid">
+                <fieldset class="flight-card">
+                  <legend>去程</legend>
+                <label>
+                  <span>去程抵達日期</span>
+                  <input id="arrival-date" type="date" />
+                </label>
+                <label>
+                  <span>去程抵達時間</span>
+                  <input id="arrival-time" type="text" inputmode="numeric" pattern="^\d{2}:\d{2}$" placeholder="14:30" />
+                </label>
+                <label>
+                  <span>抵達機場</span>
+                  <input id="arrival-airport" type="text" placeholder="例：KIX 關西機場" />
+                </label>
+                </fieldset>
+                <fieldset class="flight-card">
+                  <legend>回程</legend>
+                <label>
+                  <span>回程起飛日期</span>
+                  <input id="departure-date" type="date" />
+                </label>
+                <label>
+                  <span>回程起飛時間</span>
+                  <input id="departure-flight-time" type="text" inputmode="numeric" pattern="^\d{2}:\d{2}$" placeholder="18:20" />
+                </label>
+                <label>
+                  <span>出發機場</span>
+                  <input id="departure-airport" type="text" placeholder="例：KIX 關西機場" />
+                </label>
+                </fieldset>
+                <fieldset class="flight-card flight-options-card">
+                  <legend>機場與住宿設定</legend>
+                <label>
+                  <span>入境 / 行李 buffer</span>
+                  <select id="arrival-buffer">
+                    <option value="60">60 分鐘</option>
+                    <option value="90" selected>90 分鐘</option>
+                    <option value="120">120 分鐘</option>
+                  </select>
+                </label>
+                <label>
+                  <span>落地後動線</span>
+                  <select id="arrival-flow">
+                    <option value="hotel_first" selected>先去住宿放行李</option>
+                    <option value="direct_to_spot">直接去第一個景點</option>
+                  </select>
+                </label>
+                <label>
+                  <span>住宿 / check-in buffer</span>
+                  <select id="hotel-buffer">
+                    <option value="30">30 分鐘</option>
+                    <option value="45" selected>45 分鐘</option>
+                    <option value="60">60 分鐘</option>
+                  </select>
+                </label>
+                <label>
+                  <span>機場前置 buffer</span>
+                  <select id="departure-buffer">
+                    <option value="120">120 分鐘</option>
+                    <option value="150" selected>150 分鐘</option>
+                    <option value="180">180 分鐘</option>
+                  </select>
+                </label>
+                </fieldset>
+              </div>
+            </details>
+
+            <fieldset class="chips preference-picker">
+              <legend>偏好</legend>
+              <label><input type="checkbox" name="preference" value="culture" checked /> 文化景點</label>
+              <label><input type="checkbox" name="preference" value="food" checked /> 美食</label>
+              <label><input type="checkbox" name="preference" value="shopping" /> 購物</label>
+              <label><input type="checkbox" name="preference" value="photo" /> 好拍</label>
+            </fieldset>
+
+            <div class="form-next-row">
+              <button id="go-spots" type="button" class="next-step-button">下一步：選景點</button>
+            </div>
+
+          </form>
+        </div>
+      </section>
+
+      <section class="sheet" data-sheet="spots">
+        <div class="panel spot-panel">
+          <div class="section-title">
+            <h2>景點池</h2>
+            <p>先用 mock data 模擬使用者收藏與 AI 推薦。</p>
+          </div>
+
+          <div class="spot-toolbar">
+            <label>
+              <span>搜尋景點</span>
+              <input id="spot-search" type="search" placeholder="輸入景點、城市、區域或標籤" />
+            </label>
+          </div>
+
+          <div id="spot-count" class="spot-count"></div>
+          <div class="selected-box">
+            <div class="selected-heading">
+              <h3>目前已選</h3>
+              <div class="selected-actions">
+                <button id="reset-default-selected" type="button" class="secondary">測試預設</button>
+                <button id="clear-selected" type="button" class="secondary">清空</button>
+              </div>
+            </div>
+            <div id="selected-list" class="selected-list"></div>
+          </div>
+          <div id="spot-list" class="spot-list"></div>
+          <div class="pagination">
+            <button id="prev-page" type="button" class="secondary">上一頁</button>
+            <label class="page-size-control">
+              <span>每頁</span>
+              <select id="page-size">
+                <option value="5" selected>5 筆</option>
+                <option value="10">10 筆</option>
+                <option value="15">15 筆</option>
+              </select>
+            </label>
+            <span id="page-info"></span>
+            <button id="next-page" type="button" class="secondary">下一頁</button>
+          </div>
+          <button type="submit" form="planner-form" class="generate-bottom">生成行程</button>
+        </div>
+      </section>
+
+      <section class="sheet" data-sheet="itinerary">
+        <div class="output">
+        <div class="section-title">
+          <h2>建議行程</h2>
+          <p id="summary">選幾個景點後生成看看。</p>
+        </div>
+        <div id="warnings" class="warnings"></div>
+        <div class="map-panel">
+          <div class="map-heading">
+            <div>
+              <h3>景點分布</h3>
+              <p>依 Day 著色，協助檢查分組是否直覺。</p>
+            </div>
+            <select id="map-day-filter" aria-label="篩選地圖日期">
+              <option value="all">全部天數</option>
+            </select>
+          </div>
+          <div id="plan-map" class="plan-map empty">
+            <p>生成行程後顯示景點分布。</p>
+          </div>
+          <div class="map-zoom-controls" aria-label="地圖縮放">
+            <button id="map-zoom-in" type="button" class="secondary" aria-label="放大地圖">＋</button>
+            <button id="map-zoom-reset" type="button" class="secondary">100%</button>
+            <button id="map-zoom-out" type="button" class="secondary" aria-label="縮小地圖">−</button>
+          </div>
+        </div>
+        <details class="algorithm-panel">
+          <summary>查看算法規則與假資料樣貌</summary>
+          <div id="algorithm-notes" class="algorithm-notes"></div>
+        </details>
+        <div id="itinerary" class="itinerary empty">
+          <p>你的每日行程會顯示在這裡。</p>
+        </div>
+        </div>
+      </section>
+
+      <section class="sheet" data-sheet="weather">
+        <div class="panel support-panel">
+          <div class="section-title compact">
+            <h2>天氣與穿搭</h2>
+            <p id="weather-summary">生成行程後，依目的地抓每日天氣並給穿搭提醒。</p>
+          </div>
+          <div id="weather-list" class="weather-list empty">
+            <p>尚未產生天氣提示。</p>
+          </div>
+          <div id="outfit-note" class="outfit-note"></div>
+        </div>
+      </section>
+
+      <section class="sheet" data-sheet="reservations">
+        <div class="panel support-panel">
+          <div class="section-title compact">
+            <h2>預約與行前檢查</h2>
+            <p id="checklist-summary">需要預約、雨備與行程風險會整理在這裡。</p>
+          </div>
+          <div id="checklist-list" class="checklist-list empty">
+            <p>尚未產生檢查項目。</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="./destinations.js?v=2"></script>
+    <script src="./app.js?v=28"></script>
+  </body>
+</html>
