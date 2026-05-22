@@ -26,6 +26,9 @@ const mapDayFilterEl = document.querySelector("#map-day-filter");
 const mapZoomOutEl = document.querySelector("#map-zoom-out");
 const mapZoomInEl = document.querySelector("#map-zoom-in");
 const mapZoomResetEl = document.querySelector("#map-zoom-reset");
+const mobileSelectedCitiesEl = document.querySelector("#mobile-selected-cities");
+const mobileCityControlEl = document.querySelector(".mobile-city-control");
+const mobileCityToggleEl = document.querySelector("#mobile-city-toggle");
 
 const dayColors = ["#27615c", "#b7472a", "#4d6f9f", "#8b5a2b", "#6b5fa7", "#2f7d4f"];
 
@@ -188,6 +191,20 @@ function switchTab(tabName) {
 
 function selectedCities() {
   return [...document.querySelectorAll('[name="city"]:checked')].map((input) => input.value);
+}
+
+function renderMobileCityPicker() {
+  if (!mobileSelectedCitiesEl) return;
+  const checkedCities = selectedCities();
+  mobileSelectedCitiesEl.textContent = checkedCities.length
+    ? checkedCities.map((city) => cityNames[city]).join(" · ")
+    : "尚未選擇";
+
+  document.querySelectorAll(".mobile-city-option").forEach((option) => {
+    const isSelected = checkedCities.includes(option.dataset.city);
+    option.classList.toggle("selected", isSelected);
+    option.setAttribute("aria-pressed", String(isSelected));
+  });
 }
 
 function destinationsForSelectedCities() {
@@ -2941,6 +2958,25 @@ function buildTripInput() {
 document.querySelectorAll('[name="city"]').forEach((input) => {
   input.addEventListener("change", () => {
     currentPage = 1;
+    renderMobileCityPicker();
+    renderSpots();
+  });
+});
+
+mobileCityToggleEl?.addEventListener("click", () => {
+  const isOpen = mobileCityControlEl?.dataset.open === "true";
+  if (!mobileCityControlEl) return;
+  mobileCityControlEl.dataset.open = String(!isOpen);
+  mobileCityToggleEl.setAttribute("aria-expanded", String(!isOpen));
+});
+
+document.querySelectorAll(".mobile-city-option").forEach((button) => {
+  button.addEventListener("click", () => {
+    const input = document.querySelector(`[name="city"][value="${button.dataset.city}"]`);
+    if (!input) return;
+    input.checked = !input.checked;
+    currentPage = 1;
+    renderMobileCityPicker();
     renderSpots();
   });
 });
@@ -3030,6 +3066,7 @@ formEl.addEventListener("submit", (event) => {
   switchTab("itinerary");
 });
 
+renderMobileCityPicker();
 renderSpots();
 
 function renderTimelineItem(day, item) {

@@ -4,26 +4,20 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AI Travel Concierge Prototype</title>
-    <link rel="stylesheet" href="./styles.css?v=10" />
+    <link rel="stylesheet" href="./styles.css?v=16" />
   </head>
   <body>
     <main class="shell">
       <section class="app-hero" aria-label="AI travel concierge">
         <div class="hero-copy">
-          <p class="eyebrow">AI Travel Concierge · Build v28</p>
+          <p class="eyebrow">AI Travel Concierge · Build v34</p>
           <h1>旅遊小偷</h1>
-          <p class="hero-tagline">偷走繁瑣規劃，留下剛剛好的旅程。</p>
+          <p class="hero-mobile-note">偷走繁瑣規劃，留下剛剛好的旅程。</p>
           <div class="hero-actions" aria-label="主要操作">
             <button type="button" id="hero-start" class="hero-cta primary">開始規劃</button>
             <button type="button" id="hero-inspiration" class="hero-cta secondary">探索靈感</button>
           </div>
         </div>
-        <aside class="concierge-card" aria-label="AI concierge summary">
-          <p>Today’s Journey</p>
-          <h2>Kyoto · 5 Days</h2>
-          <span>Culture / Cafe / Hidden Spots</span>
-          <strong>AI Match 92%</strong>
-        </aside>
         <div class="hero-visual" aria-hidden="true">
           <div class="featured-route">
             <span>FEATURED ROUTE</span>
@@ -35,11 +29,11 @@
       <nav class="journey-nav" aria-label="規劃步驟">
         <p class="tabs-kicker">Plan Your Journey</p>
         <div class="sheet-tabs">
-          <button type="button" class="tab-button active" data-tab="settings">01 基本設定</button>
-          <button type="button" class="tab-button" data-tab="spots">02 景點池</button>
-          <button type="button" class="tab-button" data-tab="itinerary">03 建議行程</button>
-          <button type="button" class="tab-button" data-tab="reservations">04 預約</button>
-          <button type="button" class="tab-button" data-tab="weather">05 天氣</button>
+          <button type="button" class="tab-button active" data-tab="settings">基本設定</button>
+          <button type="button" class="tab-button" data-tab="spots">景點池</button>
+          <button type="button" class="tab-button" data-tab="itinerary">建議行程</button>
+          <button type="button" class="tab-button" data-tab="reservations">預約</button>
+          <button type="button" class="tab-button" data-tab="weather">天氣</button>
         </div>
       </nav>
 
@@ -57,6 +51,21 @@
               <label><input type="checkbox" name="city" value="kyoto" checked /> 京都</label>
               <label><input type="checkbox" name="city" value="tokyo" /> 東京</label>
               <label><input type="checkbox" name="city" value="seoul" /> 首爾</label>
+              <div class="mobile-city-control" data-open="false">
+                <button type="button" id="mobile-city-toggle" class="mobile-city-summary" aria-expanded="false">
+                  <span class="mobile-city-copy">
+                    <span class="mobile-city-label">目的地</span>
+                    <strong id="mobile-selected-cities">大阪 · 京都</strong>
+                  </span>
+                  <span class="mobile-city-action">變更</span>
+                </button>
+                <div class="mobile-city-options" aria-label="選擇目的地">
+                  <button type="button" class="mobile-city-option" data-city="osaka">大阪</button>
+                  <button type="button" class="mobile-city-option" data-city="kyoto">京都</button>
+                  <button type="button" class="mobile-city-option" data-city="tokyo">東京</button>
+                  <button type="button" class="mobile-city-option" data-city="seoul">首爾</button>
+                </div>
+              </div>
             </fieldset>
 
             <fieldset class="setting-group trip-settings">
@@ -267,8 +276,8 @@
             <label class="page-size-control">
               <span>每頁</span>
               <select id="page-size">
-                <option value="5" selected>5 筆</option>
-                <option value="10">10 筆</option>
+                <option value="5">5 筆</option>
+                <option value="10" selected>10 筆</option>
                 <option value="15">15 筆</option>
               </select>
             </label>
@@ -342,6 +351,6 @@
     </main>
 
     <script src="./destinations.js?v=2"></script>
-    <script src="./app.js?v=28"></script>
+    <script src="./app.js?v=34"></script>
   </body>
 </html>
