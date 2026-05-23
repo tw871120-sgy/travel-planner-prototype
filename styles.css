@@ -4003,3 +4003,321 @@ button.secondary,
     content: "✓ ";
   }
 }
+
+/* v35 mobile rhythm section and 24-hour text fields */
+@media (max-width: 760px) {
+  .routine-settings {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+    padding: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+  }
+
+  .routine-settings legend {
+    margin-bottom: 2px;
+    padding: 0;
+    color: rgba(43, 39, 32, 0.72);
+    font-size: 0.82rem !important;
+    font-weight: 800;
+  }
+
+  .routine-settings label {
+    display: grid;
+    grid-template-columns: minmax(84px, 0.45fr) minmax(0, 1fr);
+    gap: 10px;
+    align-items: center;
+    min-height: 48px;
+    border: 1px solid rgba(183, 148, 91, 0.24);
+    border-radius: 16px;
+    background: rgba(255, 252, 246, 0.72);
+    padding: 8px 10px 8px 12px;
+  }
+
+  .routine-settings label span {
+    margin: 0;
+    color: rgba(43, 39, 32, 0.66);
+    font-size: 0.82rem !important;
+    font-weight: 800;
+    line-height: 1.2;
+  }
+
+  .routine-settings input,
+  .routine-settings select {
+    width: 100%;
+    min-height: 38px;
+    height: 38px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.78);
+    font-size: 0.95rem;
+  }
+}
+
+/* v36 mobile flight details refinement */
+.flight-box summary::after {
+  content: "航班資訊" !important;
+  letter-spacing: 0.08em;
+}
+
+@media (max-width: 760px) {
+  .flight-box {
+    border-radius: 18px !important;
+    padding: 0 !important;
+  }
+
+  .flight-box summary {
+    min-height: 52px;
+    padding: 14px 14px !important;
+    font-size: 1.08rem !important;
+  }
+
+  .flight-box summary::after {
+    padding: 5px 10px;
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+  }
+
+  .flight-grid {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+    padding: 0 14px 16px !important;
+  }
+
+  .flight-card {
+    gap: 12px;
+    padding: 14px !important;
+    border-radius: 18px !important;
+    background: rgba(255, 252, 246, 0.72) !important;
+  }
+
+  .flight-card legend {
+    padding: 0 4px;
+    color: rgba(43, 39, 32, 0.72) !important;
+    font-family: var(--sans) !important;
+    font-size: 0.86rem !important;
+    font-weight: 900;
+    letter-spacing: 0.06em;
+  }
+
+  .flight-card label {
+    display: grid;
+    gap: 7px;
+  }
+
+  .flight-card label span {
+    color: rgba(43, 39, 32, 0.66);
+    font-size: 0.8rem !important;
+    font-weight: 800;
+    line-height: 1.2;
+  }
+
+  .flight-card input,
+  .flight-card select {
+    width: 100%;
+    min-height: 42px;
+    height: 42px;
+    padding-inline: 14px;
+    font-size: 0.96rem;
+  }
+
+  .flight-options-card {
+    background: rgba(246, 237, 224, 0.5) !important;
+  }
+}
+
+/* v39 itinerary transport clarity */
+.transit-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  max-width: 100%;
+  margin: 2px 0 6px;
+  border: 1px solid rgba(183, 148, 91, 0.24);
+  border-radius: 999px;
+  background: rgba(238, 225, 203, 0.32);
+  color: rgba(43, 39, 32, 0.68);
+  padding: 4px 10px;
+  font-family: var(--sans);
+  font-size: 0.78rem;
+  font-weight: 760;
+  line-height: 1.3;
+}
+
+.transit-line span {
+  overflow: hidden;
+  min-width: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.transit-line strong {
+  flex: 0 0 auto;
+  color: var(--charcoal);
+  font-weight: 900;
+}
+
+@media (max-width: 760px) {
+  .transit-line {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+    gap: 6px;
+    margin: 4px 0 8px;
+    padding: 6px 9px;
+    font-size: 0.76rem;
+  }
+
+  .summary-line.inline-meta {
+    line-height: 1.75;
+  }
+}
+
+/* v42 feasibility gate */
+.unplanned-panel {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 18px;
+  border: 1px solid rgba(183, 148, 91, 0.34);
+  border-radius: 22px;
+  background: linear-gradient(135deg, rgba(255, 252, 246, 0.96), rgba(238, 225, 203, 0.42));
+  box-shadow: 0 18px 40px rgba(62, 46, 29, 0.08);
+  padding: 20px;
+}
+
+.unplanned-panel h3 {
+  margin: 2px 0 6px;
+  font-family: var(--serif);
+  font-size: clamp(1.45rem, 3vw, 2rem);
+  font-weight: 600;
+}
+
+.unplanned-panel p {
+  margin: 0;
+  color: rgba(43, 39, 32, 0.68);
+}
+
+.unplanned-list {
+  display: grid;
+  gap: 10px;
+}
+
+.unplanned-item {
+  display: grid;
+  gap: 5px;
+  border: 1px solid rgba(183, 148, 91, 0.28);
+  border-radius: 16px;
+  background: rgba(255, 252, 246, 0.72);
+  padding: 14px;
+}
+
+.unplanned-item strong {
+  color: var(--charcoal);
+  font-size: 1.02rem;
+}
+
+.unplanned-item span {
+  color: rgba(43, 39, 32, 0.58);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.unplanned-item p {
+  color: rgba(43, 39, 32, 0.72);
+  font-size: 0.9rem;
+  line-height: 1.65;
+}
+
+.day-warning-list {
+  display: grid;
+  gap: 8px;
+  padding: 12px 14px;
+  border-top: 1px solid rgba(183, 148, 91, 0.22);
+  background: rgba(255, 248, 236, 0.48);
+}
+
+.day-warning {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid rgba(183, 148, 91, 0.34);
+  border-radius: 14px;
+  background: rgba(255, 252, 246, 0.82);
+  padding: 10px 12px;
+}
+
+.day-warning.critical {
+  border-color: rgba(183, 82, 58, 0.34);
+  background: rgba(255, 240, 232, 0.74);
+}
+
+.day-warning p {
+  margin: 0;
+  color: rgba(43, 39, 32, 0.74);
+  font-size: 0.88rem;
+  line-height: 1.55;
+}
+
+.dismiss-warning {
+  flex: 0 0 auto;
+  min-height: 34px;
+  border: 1px solid rgba(183, 148, 91, 0.32);
+  border-radius: 999px;
+  background: rgba(255, 252, 246, 0.9);
+  color: rgba(43, 39, 32, 0.78);
+  padding: 0 13px;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.dismiss-warning:hover {
+  border-color: rgba(183, 148, 91, 0.58);
+  background: rgba(238, 225, 203, 0.52);
+}
+
+.restore-warnings {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  z-index: 80;
+  display: none;
+  min-height: 42px;
+  border: 1px solid rgba(183, 148, 91, 0.42);
+  border-radius: 999px;
+  background: rgba(34, 31, 26, 0.92);
+  box-shadow: 0 18px 42px rgba(62, 46, 29, 0.24);
+  color: #fffaf0;
+  padding: 0 18px;
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.restore-warnings.visible {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (max-width: 760px) {
+  .unplanned-panel {
+    border-radius: 18px;
+    padding: 16px;
+  }
+
+  .day-warning {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .dismiss-warning {
+    align-self: flex-end;
+  }
+
+  .restore-warnings {
+    right: 14px;
+    bottom: 14px;
+  }
+}

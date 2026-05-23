@@ -29,6 +29,11 @@ const mapZoomResetEl = document.querySelector("#map-zoom-reset");
 const mobileSelectedCitiesEl = document.querySelector("#mobile-selected-cities");
 const mobileCityControlEl = document.querySelector(".mobile-city-control");
 const mobileCityToggleEl = document.querySelector("#mobile-city-toggle");
+const restoreWarningsButton = document.createElement("button");
+restoreWarningsButton.type = "button";
+restoreWarningsButton.className = "restore-warnings";
+restoreWarningsButton.textContent = "復原警告";
+document.body.appendChild(restoreWarningsButton);
 
 const dayColors = ["#27615c", "#b7472a", "#4d6f9f", "#8b5a2b", "#6b5fa7", "#2f7d4f"];
 
@@ -45,6 +50,7 @@ const stableDayAssignments = {};
 const manualDayOrders = {};
 const checklistState = {};
 const reservationState = {};
+const dismissedWarnings = new Set();
 const defaultSelectedDestinationIds = [
   "osaka-dotonbori",
   "osaka-castle",
@@ -1606,15 +1612,20 @@ function buildTimeline(orderedDay, tripInput) {
 
   orderedDay.destinations.forEach((destination, index) => {
     const override = destinationOverrides[destination.id];
+    const previousDestination = orderedDay.destinations[index - 1];
+    const arrivalTransportMinutes = index === 0
+      ? firstLegTransportMinutes
+      : distanceMinutes(previousDestination, destination);
+    const arrivalTransportFromLabel = index === 0
+      ? (flightBounds.inbound?.arrivalFlow === "direct_to_spot" ? (flightBounds.inbound.airport || "機場") : "住宿")
+      : previousDestination.name;
 
     if (index === 0) {
-      totalTransportMinutes += firstLegTransportMinutes;
-      cursor += firstLegTransportMinutes;
+      totalTransportMinutes += arrivalTransportMinutes;
+      cursor += arrivalTransportMinutes;
     } else {
-      const from = orderedDay.destinations[index - 1];
-      const travelMinutes = distanceMinutes(from, destination);
-      totalTransportMinutes += travelMinutes;
-      cursor += travelMinutes;
+      totalTransportMinutes += arrivalTransportMinutes;
+      cursor += arrivalTransportMinutes;
     }
 
     if (override?.fixedArrivalTime) {
@@ -1645,6 +1656,10 @@ function buildTimeline(orderedDay, tripInput) {
       endTime: minutesToClock(cursor + duration),
       name: destination.name,
       meta: `${destination.location.area} · 停留 ${duration} 分鐘 · 預估 ¥${destination.display.priceHint || 0}${override?.fixedArrivalTime ? " · 固定時間" : ""}`,
+      leaveTime: minutesToClock(cursor + duration),
+      arrivalTransportMinutes,
+      arrivalTransportFromLabel,
+      arrivalTransportToLabel: destination.name,
       stayMinutes: duration,
       areaLabel: destination.location.area,
       priceHint: destination.display.priceHint || 0,
@@ -1959,9 +1974,104 @@ function refreshDayCandidateWarnings(dayCandidates, limits, selectedDestinations
   dayCandidates.groupWarnings = groupWarnings.filter((warning) => warning.dayIndex === null);
 }
 
+function dominantCityForDay(day) {
+  if (!day.destinations.length) return null;
+  const counts = day.destinations.reduce((map, destination) => {
+    map[destination.location.city] = (map[destination.location.city] || 0) + 1;
+    return map;
+  }, {});
+  return Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0] || null;
+}
+
+function nearestDistanceToCity(destination, destinations, city) {
+  const candidates = destinations.filter((item) => item.id !== destination.id && item.location.city === city);
+  if (!candidates.length) return Infinity;
+  return Math.min(...candidates.map((item) => distanceMinutes(destination, item)));
+}
+
+function likelyBetterDayLabel(destination, dayCandidates, sourceDayIndex) {
+  const candidates = dayCandidates
+    .filter((day) => day.dayIndex !== sourceDayIndex)
+    .filter((day) => day.destinations.some((item) => item.location.city === destination.location.city))
+    .map((day) => ({
+      dayIndex: day.dayIndex,
+      score: dayPairAverage(destination, day),
+    }))
+    .sort((a, b) => b.score - a.score);
+  return candidates[0] ? `Day ${candidates[0].dayIndex}` : "同城市路線";
+}
+
+function findFeasibleGateTarget(destination, sourceDay, dayCandidates, limits) {
+  return dayCandidates
+    .filter((targetDay) => targetDay.dayIndex !== sourceDay.dayIndex)
+    .filter((targetDay) => targetDay.destinations.some((item) => item.location.city === destination.location.city))
+    .map((targetDay) => {
+      const projected = [...targetDay.destinations, destination];
+      const hasCapacity = dayHasCapacityFor(targetDay, [destination], limits);
+      const sameAreaBonus = targetDay.destinations.some((item) => item.location.area === destination.location.area) ? 25 : 0;
+      const pairCompatibility = dayPairAverage(destination, targetDay);
+      const transportAfter = estimateDayTransportMinutes(projected);
+      const targetLimits = limitsForDay(targetDay.dayIndex, limits);
+      const softCapacityFit = projected.length <= targetLimits.maxDestinations + 1
+        && groupStayMinutes(projected) <= targetLimits.maxSightseeingMinutes + 90
+        && transportAfter <= Math.max(90, targetLimits.maxOutingMinutes * 0.38);
+      return {
+        targetDay,
+        hasCapacity,
+        softCapacityFit,
+        score: pairCompatibility + sameAreaBonus - Math.max(0, transportAfter - estimateDayTransportMinutes(targetDay.destinations)) * 0.15,
+      };
+    })
+    .filter((item) => item.hasCapacity || item.softCapacityFit)
+    .sort((a, b) => Number(b.hasCapacity) - Number(a.hasCapacity) || b.score - a.score)[0]?.targetDay || null;
+}
+
+function applyFeasibilityGate(dayCandidates, limits) {
+  const unplanned = [];
+  dayCandidates.forEach((day) => {
+    if (day.destinations.length <= 1) return;
+    if (day.destinations.some(isUserConstrainedDestination)) return;
+
+    const dominantCity = dominantCityForDay(day);
+    if (!dominantCity) return;
+
+    const removals = day.destinations
+      .filter((destination) => destination.location.city !== dominantCity)
+      .map((destination) => ({
+        destination,
+        nearestDominantCityMinutes: nearestDistanceToCity(destination, day.destinations, dominantCity),
+      }))
+      .filter((item) => item.nearestDominantCityMinutes > 90)
+      .sort((a, b) => b.nearestDominantCityMinutes - a.nearestDominantCityMinutes);
+
+    removals.forEach(({ destination, nearestDominantCityMinutes }) => {
+      const betterDay = likelyBetterDayLabel(destination, dayCandidates, day.dayIndex);
+      day.destinations = day.destinations.filter((item) => item.id !== destination.id);
+      day.totalStay = groupStayMinutes(day.destinations);
+      const targetDay = findFeasibleGateTarget(destination, day, dayCandidates, limits);
+      if (targetDay) {
+        targetDay.destinations.push(destination);
+        targetDay.totalStay = groupStayMinutes(targetDay.destinations);
+        targetDay.reasons.push(`${destination.name} 從 Day ${day.dayIndex} 移到 Day ${targetDay.dayIndex}，避免跨城市錯配。`);
+        return;
+      }
+      unplanned.push({
+        destination,
+        sourceDayIndex: day.dayIndex,
+        ruleCode: "cross_city_hard_mismatch",
+        severity: "decision",
+        message: `${destination.name} 暫未排入：它屬於 ${destination.location.cityName}${destination.location.area ? ` · ${destination.location.area}` : ""}，但 Day ${day.dayIndex} 主要是 ${day.destinations[0]?.location.cityName || "另一城市"} 路線，最近同日景點交通約 ${nearestDominantCityMinutes} 分鐘。建議改排到 ${betterDay}、替換同城市景點，或保留為候選景點。`,
+      });
+    });
+  });
+
+  return unplanned;
+}
+
 function createPlan(tripInput, selectedDestinations) {
   const dayCandidates = groupDestinationsByDay(selectedDestinations, tripInput.kDays);
   repairBestTimeWindows(dayCandidates, tripInput);
+  const unplannedDestinations = applyFeasibilityGate(dayCandidates, timelineLimits(tripInput));
   refreshDayCandidateWarnings(dayCandidates, timelineLimits(tripInput), selectedDestinations);
   const globalGroupWarnings = dayCandidates.groupWarnings || [];
   const days = dayCandidates.map((candidate) => {
@@ -1971,27 +2081,31 @@ function createPlan(tripInput, selectedDestinations) {
     ruleCheck.softWarnings.unshift(...(candidate.groupWarnings || []));
     ruleCheck.hasIssue = ruleCheck.hasIssue || Boolean(candidate.groupWarnings?.length);
     const advisorNote = buildAdvisorNote(timelineDay, ruleCheck);
-    return { ...timelineDay, reasons: candidate.reasons || [], ruleCheck, advisorNote };
+    const dayWarnings = [
+      ...ruleCheck.hardViolations.map((item) => ({ ...item, severity: "critical" })),
+      ...ruleCheck.softWarnings.map((item) => ({ ...item, severity: "warning" })),
+    ];
+    return { ...timelineDay, reasons: candidate.reasons || [], ruleCheck, advisorNote, dayWarnings };
   });
 
   return {
     tripInput,
     days,
+    unplannedDestinations,
     warnings: [
+      ...unplannedDestinations.map((item) => item.message),
       ...globalGroupWarnings.filter((warning) => warning.dayIndex === null).map((warning) => warning.message),
-      ...days.flatMap((day) => [
-      ...day.ruleCheck.hardViolations.map((item) => item.message),
-      ...day.ruleCheck.softWarnings.map((item) => item.message),
-      ]),
     ],
   };
 }
 
 function renderPlan(plan, selectedCount) {
   warningsEl.innerHTML = plan.warnings.map((warning) => `<div class="warning">${warning}</div>`).join("");
-  summaryEl.textContent = `已選 ${selectedCount} 個景點，產生 ${plan.days.length} 天行程草稿。`;
+  const plannedCount = plan.days.reduce((sum, day) => sum + day.destinations.length, 0);
+  const unplannedCount = plan.unplannedDestinations?.length || 0;
+  summaryEl.textContent = `已選 ${selectedCount} 個景點，已排入 ${plannedCount} 個，產生 ${plan.days.length} 天行程草稿${unplannedCount ? `，${unplannedCount} 個待決策` : ""}。`;
   itineraryEl.className = "itinerary";
-  itineraryEl.innerHTML = plan.days
+  itineraryEl.innerHTML = `${renderUnplannedDestinations(plan.unplannedDestinations || [])}${plan.days
     .map((day) => `
       <article class="day">
         <header class="day-header">
@@ -2000,15 +2114,60 @@ function renderPlan(plan, selectedCount) {
         </header>
         <div class="schedule">
           ${day.items.map((item) => renderTimelineItem(day, item)).join("")}
+          ${renderDayWarnings(day)}
           ${day.advisorNote ? `<p class="ai-note">AI 顧問：${day.advisorNote.summary} ${day.advisorNote.suggestions.join("、")}。</p>` : ""}
         </div>
       </article>
     `)
-    .join("");
+    .join("")}`;
   renderAlgorithmNotes(plan);
   renderPlanMap(plan);
   bindScheduleEditors();
   renderSupportPanels(plan);
+  updateRestoreWarningsButton();
+}
+
+function warningKey(dayIndex, warning, index) {
+  return `day-${dayIndex}:${warning.ruleCode || "warning"}:${warning.message}:${index}`;
+}
+
+function renderDayWarnings(day) {
+  const visibleWarnings = (day.dayWarnings || [])
+    .map((warning, index) => ({ warning, index, key: warningKey(day.dayIndex, warning, index) }))
+    .filter((item) => !dismissedWarnings.has(item.key));
+  if (!visibleWarnings.length) return "";
+  return `
+    <div class="day-warning-list">
+      ${visibleWarnings.map(({ warning, key }) => `
+        <article class="day-warning ${warning.severity === "critical" ? "critical" : ""}">
+          <p>${warning.message}</p>
+          <button type="button" class="dismiss-warning" data-warning-key="${key}">沒關係</button>
+        </article>
+      `).join("")}
+    </div>
+  `;
+}
+
+function renderUnplannedDestinations(unplannedDestinations) {
+  if (!unplannedDestinations.length) return "";
+  return `
+    <section class="unplanned-panel" aria-label="未排入景點">
+      <div>
+        <p class="section-kicker">Needs Decision</p>
+        <h3>未排入 / 待決策</h3>
+        <p>這些景點不是刪掉，而是目前放進行程會造成明顯不合理路線，需要你決定是否替換、強制加入或保留候選。</p>
+      </div>
+      <div class="unplanned-list">
+        ${unplannedDestinations.map(({ destination, message }) => `
+          <article class="unplanned-item">
+            <strong>${destination.name}</strong>
+            <span>${destination.location.cityName} · ${destination.location.area}</span>
+            <p>${message}</p>
+          </article>
+        `).join("")}
+      </div>
+    </section>
+  `;
 }
 
 function renderPlanMap(plan) {
@@ -2740,6 +2899,14 @@ function removeDestinationFromPlan(destinationId) {
 }
 
 function bindScheduleEditors() {
+  document.querySelectorAll(".dismiss-warning").forEach((button) => {
+    button.addEventListener("click", (event) => {
+      dismissedWarnings.add(event.target.dataset.warningKey);
+      event.target.closest(".day-warning")?.remove();
+      updateRestoreWarningsButton();
+    });
+  });
+
   document.querySelectorAll(".schedule-item.editable").forEach((item) => {
     item.addEventListener("click", (event) => {
       if (event.target.closest("button") || event.target.closest("input") || event.target.closest("select") || item.classList.contains("drag-over")) return;
@@ -2892,6 +3059,16 @@ function bindScheduleEditors() {
     });
   });
 }
+
+function updateRestoreWarningsButton() {
+  restoreWarningsButton.classList.toggle("visible", dismissedWarnings.size > 0);
+}
+
+restoreWarningsButton.addEventListener("click", () => {
+  dismissedWarnings.clear();
+  if (currentPlan) renderPlan(currentPlan, currentSettings?.selectedDestinations.length || 0);
+  updateRestoreWarningsButton();
+});
 
 function regeneratePlan() {
   if (!currentSettings) return;
@@ -3112,10 +3289,14 @@ function renderItemMeta(item) {
       ? ` · 建議 ${item.bestTimeWindow.preferredTime}${item.bestTimeWindow.reason ? ` ${item.bestTimeWindow.reason}` : ""}`
       : "";
     return `
+      <p class="transit-line">
+        <span>${item.arrivalTransportFromLabel || "上一站"} → ${item.arrivalTransportToLabel || item.name}</span>
+        <strong>約 ${item.arrivalTransportMinutes || 0} 分鐘</strong>
+      </p>
       <p class="summary-line inline-meta">
         ${item.areaLabel || ""} · 停留
         <input type="text" inputmode="numeric" class="inline-duration destination-duration-input" value="${item.stayMinutes}" aria-label="編輯 ${item.name} 停留時間" />
-        分鐘 · 預估 ¥${item.priceHint || 0}${bestTimeText}
+        分鐘 · ${item.leaveTime ? `離開 ${item.leaveTime} · ` : ""}預估 ¥${item.priceHint || 0}${bestTimeText}
       </p>
       <label class="inline-lock">
         <input type="checkbox" class="destination-lock-input" ${item.isFixedTime ? "checked" : ""} />
@@ -3153,6 +3334,14 @@ function renderQuickActions(day, item) {
 }
 
 function bindScheduleEditors() {
+  document.querySelectorAll(".dismiss-warning").forEach((button) => {
+    button.addEventListener("click", (event) => {
+      dismissedWarnings.add(event.target.dataset.warningKey);
+      event.target.closest(".day-warning")?.remove();
+      updateRestoreWarningsButton();
+    });
+  });
+
   document.querySelectorAll(".schedule-item.editable").forEach((item) => {
     item.addEventListener("click", (event) => {
       if (event.target.closest("button") || event.target.closest("input") || event.target.closest("select") || item.classList.contains("drag-over")) return;
@@ -3196,12 +3385,14 @@ function bindScheduleEditors() {
       const item = event.target.closest(".schedule-item");
       const destinationId = item.dataset.destinationId;
       const previous = destinationOverrides[destinationId] || {};
+      const currentDayIndex = Number(item.dataset.day);
+      if (currentDayIndex) manualDayAssignments[destinationId] = currentDayIndex;
       destinationOverrides[destinationId] = {
         ...previous,
         preferredArrivalTime: event.target.value,
-        ...(previous.fixedArrivalTime ? { fixedArrivalTime: event.target.value } : {}),
+        fixedArrivalTime: event.target.value,
       };
-      if (previous.fixedArrivalTime) regeneratePlan();
+      regeneratePlan();
     });
   });
 

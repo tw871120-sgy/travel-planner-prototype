@@ -4,13 +4,13 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AI Travel Concierge Prototype</title>
-    <link rel="stylesheet" href="./styles.css?v=16" />
+    <link rel="stylesheet" href="./styles.css?v=21" />
   </head>
   <body>
     <main class="shell">
       <section class="app-hero" aria-label="AI travel concierge">
         <div class="hero-copy">
-          <p class="eyebrow">AI Travel Concierge · Build v34</p>
+          <p class="eyebrow">AI Travel Planner · Build v46</p>
           <h1>旅遊小偷</h1>
           <p class="hero-mobile-note">偷走繁瑣規劃，留下剛剛好的旅程。</p>
           <div class="hero-actions" aria-label="主要操作">
@@ -110,7 +110,7 @@
               <legend>每日節奏</legend>
             <label>
               <span>每天出門</span>
-              <input id="start-time" type="time" value="09:30" />
+              <input id="start-time" type="text" inputmode="numeric" pattern="^\d{2}:\d{2}$" value="09:30" />
             </label>
 
             <label>
@@ -125,7 +125,7 @@
 
             <label>
               <span>回住宿時間</span>
-              <input id="return-time" type="time" value="21:00" />
+              <input id="return-time" type="text" inputmode="numeric" pattern="^\d{2}:\d{2}$" value="21:00" />
             </label>
             </fieldset>
 
@@ -350,7 +350,7 @@
       </section>
     </main>
 
-    <script src="./destinations.js?v=2"></script>
-    <script src="./app.js?v=34"></script>
+    <script src="./destinations.js?v=3"></script>
+    <script src="./app.js?v=46"></script>
   </body>
 </html>
